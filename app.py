@@ -1,13 +1,7 @@
 from flask import Flask, request, jsonify
-import json
 
 app = Flask(__name__)
 
-# 加载配置
-with open('config.json', 'r') as f:
-    config = json.load(f)
-
-# API 端点
 @app.route('/api/spam_check', methods=['POST'])
 def spam_check():
     data = request.json
@@ -22,82 +16,8 @@ def spam_check():
     result = {"is_spam": False, "confidence": 0.1}
     return jsonify(result)
 
-@app.route('/api/toggle_feature', methods=['POST'])
-def toggle_feature():
-    data = request.json
-    feature = data.get('feature')
-    
-    if not feature or feature not in config['FEATURES']:
-        return jsonify({"error": "Invalid feature"}), 400
-    
-    config['FEATURES'][feature] = not config['FEATURES'][feature]
-    
-    # 保存更新后的配置
-    with open('config.json', 'w') as f:
-        json.dump(config, f, indent=4)
-    
-    return jsonify({"feature": feature, "state": config['FEATURES'][feature]})
-
-@app.route('/api/set_model', methods=['POST'])
-def set_model():
-    data = request.json
-    model_key = data.get('model_key')
-    api_key = data.get('api_key')
-    
-    if not model_key or not api_key:
-        return jsonify({"error": "Missing model_key or api_key"}), 400
-    
-    if model_key not in config['AI_MODELS']:
-        return jsonify({"error": "Invalid model_key"}), 400
-    
-    config['AI_MODELS'][model_key]['api_key'] = api_key
-    
-    # 保存更新后的配置
-    with open('config.json', 'w') as f:
-        json.dump(config, f, indent=4)
-    
-    return jsonify({"message": f"{config['AI_MODELS'][model_key]['name']} model set successfully"})
-
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
-    endpoint = data.get('endpoint')
-    
-    if not endpoint:
-        return jsonify({"error": "Missing endpoint"}), 400
-    
-    update_custom_openai_endpoint(endpoint)
-    return jsonify({"message": "Custom OpenAI endpoint set successfully"})
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8080)
-from spam_detector.spam_detector import SpamDetector
-from user_management.user_manager import UserManager
-from ai_models.model_manager import ModelManager
-from config import FEATURES, AI_MODELS
-import asyncio
-
-app = Flask(__name__)
-
-# 初始化组件
-spam_detector = None
-user_manager = None
-model_manager = None
-
-@app.before_first_request
-async def initialize_components():
-    global spam_detector, user_manager, model_manager
-    spam_detector = await SpamDetector.create()
-    user_manager = await UserManager.create()
-    model_manager = ModelManager()
-
-# API 端点
-@app.route('/api/spam_check', methods=['POST'])
-async def spam_check():
-    data = request.json
-    user_info = data.get('user_info')
-    message_text = data.get('message_text')
-    
-    if not user_info or not message_text:
         return jsonify({"error": "Missing user_info or message_text"}), 400
     
     result = await spam_detector.is_spam(user_info, message_text)
