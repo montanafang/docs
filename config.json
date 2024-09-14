@@ -1,0 +1,1 @@
+{"FEATURES": {"spam_detection": true, "auto_ban": true, "welcome_message": true, "user_stats": true, "warning_system": true}, "AI_MODELS": {"openai": {"name": "OpenAI", "api_key": ""}, "custom_model": {"name": "Custom Model", "api_key": ""}}}

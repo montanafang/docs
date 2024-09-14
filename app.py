@@ -1,15 +1,11 @@
 from flask import Flask, request, jsonify
-from spam_detector.spam_detector import SpamDetector
-from user_management.user_manager import UserManager
-from ai_models.model_manager import ModelManager
-from config import FEATURES, AI_MODELS, update_api_key, update_custom_openai_endpoint
+import json
 
 app = Flask(__name__)
 
-# 初始化组件
-spam_detector = SpamDetector.create()
-user_manager = UserManager.create()
-model_manager = ModelManager()
+# 加载配置
+with open('config.json', 'r') as f:
+    config = json.load(f)
 
 # API 端点
 @app.route('/api/spam_check', methods=['POST'])
@@ -21,60 +17,26 @@ def spam_check():
     if not user_info or not message_text:
         return jsonify({"error": "Missing user_info or message_text"}), 400
     
-    result = spam_detector.is_spam(user_info, message_text)
+    # 这里应该实现实际的垃圾检测逻辑
+    # 现在只返回一个模拟的结果
+    result = {"is_spam": False, "confidence": 0.1}
     return jsonify(result)
-
-@app.route('/api/ban_user', methods=['POST'])
-def ban_user():
-    data = request.json
-    chat_id = data.get('chat_id')
-    user_id = data.get('user_id')
-    
-    if not chat_id or not user_id:
-        return jsonify({"error": "Missing chat_id or user_id"}), 400
-    
-    user_manager.ban_user(chat_id, user_id)
-    return jsonify({"message": "User banned successfully"})
-
-@app.route('/api/unban_user', methods=['POST'])
-def unban_user():
-    data = request.json
-    chat_id = data.get('chat_id')
-    user_id = data.get('user_id')
-    
-    if not chat_id or not user_id:
-        return jsonify({"error": "Missing chat_id or user_id"}), 400
-    
-    user_manager.unban_user(chat_id, user_id)
-    return jsonify({"message": "User unbanned successfully"})
-
-@app.route('/api/warn_user', methods=['POST'])
-def warn_user():
-    data = request.json
-    chat_id = data.get('chat_id')
-    user_id = data.get('user_id')
-    
-    if not chat_id or not user_id:
-        return jsonify({"error": "Missing chat_id or user_id"}), 400
-    
-    warning_count = user_manager.warn_user(chat_id, user_id)
-    return jsonify({"message": f"User warned. Warning count: {warning_count}"})
-
-@app.route('/api/get_stats', methods=['GET'])
-def get_stats():
-    stats = user_manager.get_stats()
-    return jsonify({"stats": stats})
 
 @app.route('/api/toggle_feature', methods=['POST'])
 def toggle_feature():
     data = request.json
     feature = data.get('feature')
     
-    if not feature or feature not in FEATURES:
+    if not feature or feature not in config['FEATURES']:
         return jsonify({"error": "Invalid feature"}), 400
     
-    FEATURES[feature] = not FEATURES[feature]
-    return jsonify({"feature": feature, "state": FEATURES[feature]})
+    config['FEATURES'][feature] = not config['FEATURES'][feature]
+    
+    # 保存更新后的配置
+    with open('config.json', 'w') as f:
+        json.dump(config, f, indent=4)
+    
+    return jsonify({"feature": feature, "state": config['FEATURES'][feature]})
 
 @app.route('/api/set_model', methods=['POST'])
 def set_model():
@@ -85,19 +47,19 @@ def set_model():
     if not model_key or not api_key:
         return jsonify({"error": "Missing model_key or api_key"}), 400
     
-    if model_key not in AI_MODELS:
+    if model_key not in config['AI_MODELS']:
         return jsonify({"error": "Invalid model_key"}), 400
     
-    success = model_manager.set_model(model_key, api_key)
-    if success:
-        update_api_key(model_key, api_key)
-        return jsonify({"message": f"{AI_MODELS[model_key]['name']} model set successfully"})
-    else:
-        return jsonify({"error": "Failed to set model"}), 500
+    config['AI_MODELS'][model_key]['api_key'] = api_key
+    
+    # 保存更新后的配置
+    with open('config.json', 'w') as f:
+        json.dump(config, f, indent=4)
+    
+    return jsonify({"message": f"{config['AI_MODELS'][model_key]['name']} model set successfully"})
 
-@app.route('/api/set_custom_openai_endpoint', methods=['POST'])
-def set_custom_openai_endpoint():
-    data = request.json
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=8080)
     endpoint = data.get('endpoint')
     
     if not endpoint:
