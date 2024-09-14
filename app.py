@@ -3,21 +3,12 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 @app.route('/api/spam_check', methods=['POST'])
-def spam_check():
+async def spam_check():
     data = request.json
     user_info = data.get('user_info')
     message_text = data.get('message_text')
     
     if not user_info or not message_text:
-        return jsonify({"error": "Missing user_info or message_text"}), 400
-    
-    # 这里应该实现实际的垃圾检测逻辑
-    # 现在只返回一个模拟的结果
-    result = {"is_spam": False, "confidence": 0.1}
-    return jsonify(result)
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8080)
         return jsonify({"error": "Missing user_info or message_text"}), 400
     
     result = await spam_detector.is_spam(user_info, message_text)
@@ -94,4 +85,4 @@ def set_model():
         return jsonify({"error": "Failed to set model"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=8080)
